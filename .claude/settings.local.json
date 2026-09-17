@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__monospace__read_data_sources",
+      "mcp__monospace__read_schema",
+      "WebSearch",
+      "mcp__monospace__create_items",
+      "mcp__monospace__update_item"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "monospace"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "monospace": {
+      "source": "directus/monospace-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/monospace/SKILL.md",
+      "computedHash": "c9331bb92a16482250c0401c2a2666071a9a808f2848f654c4f82ac8fdb5018a"
+    }
+  }
+}
