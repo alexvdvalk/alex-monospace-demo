@@ -10,7 +10,24 @@
 	import { formatRelativeDay } from '$lib/format';
 	import { priorityLabels, priorityOptions, typeLabels, typeOptions } from '$lib/tracker';
 
-	let { data } = $props();
+	let { data, form } = $props();
+
+	type FormResult =
+		| { success: true; action: string }
+		| { action: string; errors: Record<string, string>; values?: Record<string, string | null> };
+
+	const result = $derived(form as FormResult | null | undefined);
+	const createErrors = $derived(
+		result && 'errors' in result && result.action === 'create' ? result.errors : {}
+	);
+	const hasCreateError = $derived(Object.keys(createErrors).length > 0);
+
+	function field(name: string): string {
+		if (result && 'values' in result && result.action === 'create') {
+			return result.values?.[name] ?? '';
+		}
+		return '';
+	}
 
 	let showForm = $state(false);
 	let filterType = $state('all');
@@ -89,7 +106,7 @@
 		</Button>
 	</div>
 
-	{#if showForm}
+	{#if showForm || hasCreateError}
 		<form
 			method="POST"
 			action="?/create"
@@ -102,40 +119,60 @@
 			}}
 		>
 			<h2 class="mt-0 mb-4 text-base font-semibold">New issue in {data.project.key}</h2>
-			<Field label="Title" class="mb-3.5">
-				<input name="title" type="text" placeholder="What needs to be done?" required class={inputClass} />
+			{#if createErrors.form}
+				<p class="mb-4 rounded-md bg-danger/10 px-3 py-2 text-[0.85rem] text-danger" role="alert">
+					{createErrors.form}
+				</p>
+			{/if}
+			<Field label="Title" class="mb-3.5" error={createErrors.title ?? ''}>
+				<input
+					name="title"
+					type="text"
+					placeholder="What needs to be done?"
+					required
+					value={field('title')}
+					class={inputClass}
+				/>
 			</Field>
 			<Field label="Description" hint="(optional)" class="mb-3.5">
-				<textarea name="description" rows="3" placeholder="Add details..." class={inputClass}></textarea>
+				<textarea name="description" rows="3" placeholder="Add details..." class={inputClass}
+					>{field('description')}</textarea
+				>
 			</Field>
 			<div class="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-3">
-				<Field label="Type" class="mb-3.5">
-					<select name="type" class={selectClass}>
+				<Field label="Type" class="mb-3.5" error={createErrors.type ?? ''}>
+					<select name="type" value={field('type') || 'task'} class={selectClass}>
 						{#each typeOptions as t (t)}
 							<option value={t}>{typeLabels[t]}</option>
 						{/each}
 					</select>
 				</Field>
-				<Field label="Priority" class="mb-3.5">
-					<select name="priority" class={selectClass}>
+				<Field label="Priority" class="mb-3.5" error={createErrors.priority ?? ''}>
+					<select name="priority" value={field('priority') || 'medium'} class={selectClass}>
 						{#each priorityOptions as p (p)}
-							<option value={p} selected={p === 'medium'}>{priorityLabels[p]}</option>
+							<option value={p}>{priorityLabels[p]}</option>
 						{/each}
 					</select>
 				</Field>
 				<Field label="Assignee" hint="(opt)" class="mb-3.5">
-					<input name="assignee" type="text" placeholder="Name" class={inputClass} />
+					<input name="assignee" type="text" placeholder="Name" value={field('assignee')} class={inputClass} />
 				</Field>
 				<Field label="Reporter" class="mb-3.5">
-					<input name="reporter" type="text" value="System" class={inputClass} />
+					<input name="reporter" type="text" value={field('reporter') || 'System'} class={inputClass} />
 				</Field>
 			</div>
 			<div class="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-3">
 				<Field label="Labels" hint="(opt)" class="mb-3.5">
-					<input name="labels" type="text" placeholder="frontend, backend" class={inputClass} />
+					<input
+						name="labels"
+						type="text"
+						placeholder="frontend, backend"
+						value={field('labels')}
+						class={inputClass}
+					/>
 				</Field>
 				<Field label="Due date" hint="(opt)" class="mb-3.5">
-					<input name="due_date" type="date" class={inputClass} />
+					<input name="due_date" type="date" value={field('due_date')} class={inputClass} />
 				</Field>
 			</div>
 			<Button type="submit" variant="primary">Create issue</Button>
@@ -182,12 +219,6 @@
 							</div>
 						</a>
 					{/each}
-
-					{#if column.key !== 'done'}
-						<form method="POST" action="?/updateStatus" use:enhance class="hidden">
-							<!-- Quick-move buttons shown on each card could go here -->
-						</form>
-					{/if}
 				</div>
 			</div>
 		{/each}

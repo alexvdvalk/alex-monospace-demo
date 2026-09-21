@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { monospace } from '$lib/server/monospace';
+import { isCallStatus } from '$lib/sales';
 import type { Actions, PageServerLoad } from './$types';
 
 export interface SalesCallFormValues {
@@ -120,6 +121,10 @@ export const actions: Actions = {
 			if (Number.isNaN(amount) || amount < 0) {
 				errors.deal_value = 'Deal value must be a positive number';
 			}
+		}
+
+		if (!isCallStatus(values.status)) {
+			errors.status = 'Choose a valid status';
 		}
 
 		if (Object.keys(errors).length > 0) {

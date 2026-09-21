@@ -8,7 +8,7 @@
 
 	let { type, size = 'sm' }: Props = $props();
 
-	const key = $derived(type ?? 'task');
+	const key = $derived(type && type in typeLabels ? type : 'task');
 
 	const backgrounds: Record<string, string> = {
 		task: 'bg-mist/50',
@@ -25,7 +25,7 @@
 
 <span
 	title={typeLabels[key]}
-	class="flex shrink-0 items-center justify-center {backgrounds[key] ?? backgrounds.task} {sizes[size]}"
+	class="flex shrink-0 items-center justify-center {backgrounds[key]} {sizes[size]}"
 >
 	{typeIcon[key]}
 </span>

@@ -8,7 +8,7 @@
 </script>
 
 <nav class="text-xs text-muted {className}" aria-label="Breadcrumb">
-	{#each items as item, i (item.label)}
+	{#each items as item, i (i)}
 		{#if i > 0}
 			<span class="mx-1.5 opacity-50">/</span>
 		{/if}

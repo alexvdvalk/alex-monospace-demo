@@ -1,11 +1,12 @@
 import { error, fail } from '@sveltejs/kit';
 import { monospace } from '$lib/server/monospace';
+import { isPriority, isStatus, isType } from '$lib/tracker';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const projectKey = params.key.toUpperCase();
-	const issueNumber = parseInt(params.number, 10);
-	if (Number.isNaN(issueNumber)) throw error(400, 'Invalid issue number');
+	if (!/^\d+$/.test(params.number)) error(400, 'Invalid issue number');
+	const issueNumber = Number(params.number);
 
 	const projects = await monospace.jira_projects.readMany({
 		fields: ['id', 'name', 'key'] as const,
@@ -30,7 +31,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			'due_date',
 			'created_at',
 			'updated_at',
-			{ comments: ['id', 'author', 'body', 'created_at'] }
+			{ comments: ['id', 'AUTHOR', 'BODY', 'created_at'] }
 		] as const,
 		filter: {
 			_and: [
@@ -51,7 +52,7 @@ export const actions: Actions = {
 	update: async ({ request, params }) => {
 		const formData = await request.formData();
 		const projectKey = params.key.toUpperCase();
-		const issueNumber = parseInt(params.number, 10);
+		const issueNumber = Number(params.number);
 
 		const issues = await monospace.jira_issues.readMany({
 			fields: ['id'] as const,
@@ -67,11 +68,26 @@ export const actions: Actions = {
 		if (!issue) throw error(404, 'Issue not found');
 
 		const data: Record<string, string | null> = {};
-		for (const field of ['status', 'priority', 'type', 'assignee', 'labels', 'due_date']) {
+		for (const field of ['assignee', 'labels', 'due_date']) {
 			const val = formData.get(field);
 			if (val !== null) {
 				data[field] = val.toString().trim() || null;
 			}
+		}
+
+		const enums = [
+			['status', isStatus],
+			['priority', isPriority],
+			['type', isType]
+		] as const;
+		for (const [field, isValid] of enums) {
+			const val = formData.get(field);
+			if (val === null) continue;
+			const str = val.toString();
+			if (!isValid(str)) {
+				return fail(400, { action: 'update', errors: { form: `Invalid ${field}.` } });
+			}
+			data[field] = str;
 		}
 
 		const title = formData.get('title');
@@ -84,6 +100,10 @@ export const actions: Actions = {
 		const description = formData.get('description');
 		if (description !== null) {
 			data.description = description.toString().trim() || null;
+		}
+
+		if (Object.keys(data).length === 0) {
+			return fail(400, { action: 'update', errors: { form: 'Nothing to update.' } });
 		}
 
 		try {
@@ -103,7 +123,7 @@ export const actions: Actions = {
 	comment: async ({ request, params }) => {
 		const formData = await request.formData();
 		const projectKey = params.key.toUpperCase();
-		const issueNumber = parseInt(params.number, 10);
+		const issueNumber = Number(params.number);
 		const author = formData.get('author')?.toString().trim() ?? '';
 		const body = formData.get('body')?.toString().trim() ?? '';
 
@@ -128,8 +148,8 @@ export const actions: Actions = {
 				data: {
 					id: crypto.randomUUID() as `${string}-${string}-${string}-${string}-${string}`,
 					issue: { _connect: { key: { id: issue.id! } } },
-					author,
-					body
+					AUTHOR: author,
+					BODY: body
 				},
 				fields: ['id'] as const
 			});

@@ -100,9 +100,9 @@
 							{row.warehouse_locations?.name ?? 'Unknown warehouse'}
 						</div>
 						<div class="text-[0.85rem] text-muted">
-							{#if row.warehouse_locations}
-								{row.warehouse_locations.region}, {row.warehouse_locations.country}
-							{/if}
+							{[row.warehouse_locations?.region, row.warehouse_locations?.country]
+								.filter(Boolean)
+								.join(', ')}
 						</div>
 						<div class="mt-1 flex items-baseline gap-3">
 							<span class="text-xl font-bold tabular-nums">{row.quantity_on_hand ?? 0}</span>

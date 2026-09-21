@@ -1,5 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
 import { monospace } from '$lib/server/monospace';
+import { isPriority, isType } from '$lib/tracker';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -48,8 +49,15 @@ export const actions: Actions = {
 		const labels = formData.get('labels')?.toString().trim() || null;
 		const due_date = formData.get('due_date')?.toString() || null;
 
-		if (!title) {
-			return fail(400, { action: 'create', errors: { title: 'Title is required' }, values: { title, description, type, priority, assignee, reporter, labels, due_date } });
+		const values = { title, description, type, priority, assignee, reporter, labels, due_date };
+
+		const errors: Record<string, string> = {};
+		if (!title) errors.title = 'Title is required';
+		if (!isType(type)) errors.type = 'Choose a valid type';
+		if (!isPriority(priority)) errors.priority = 'Choose a valid priority';
+
+		if (Object.keys(errors).length > 0) {
+			return fail(400, { action: 'create', errors, values });
 		}
 
 		const projects = await monospace.jira_projects.readMany({
@@ -87,7 +95,7 @@ export const actions: Actions = {
 			});
 		} catch (err) {
 			console.error('Failed to create issue:', err);
-			return fail(500, { action: 'create', errors: { form: 'Could not create issue.' }, values: { title, description, type, priority, assignee, reporter, labels, due_date } });
+			return fail(500, { action: 'create', errors: { form: 'Could not create issue.' }, values });
 		}
 
 		return { success: true, action: 'create' };

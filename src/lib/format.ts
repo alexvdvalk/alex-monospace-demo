@@ -1,5 +1,6 @@
 export function formatPrice(value: string | number | null | undefined): string {
-	const amount = typeof value === 'number' ? value : Number(value ?? 0);
+	if (value == null || value === '') return '—';
+	const amount = typeof value === 'number' ? value : Number(value);
 	if (Number.isNaN(amount)) return '—';
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',

@@ -3,10 +3,10 @@
 
 	let { priority }: { priority: string | null | undefined } = $props();
 
-	const key = $derived(priority ?? 'medium');
+	const key = $derived(priority && priority in priorityDotClass ? priority : 'medium');
 </script>
 
 <span
 	title="{priorityLabels[key]} priority"
-	class="size-2 shrink-0 rounded-full {priorityDotClass[key] ?? priorityDotClass.medium}"
+	class="size-2 shrink-0 rounded-full {priorityDotClass[key]}"
 ></span>

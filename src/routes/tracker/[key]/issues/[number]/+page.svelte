@@ -19,7 +19,21 @@
 		typeOptions
 	} from '$lib/tracker';
 
-	let { data } = $props();
+	let { data, form } = $props();
+
+	type FormResult =
+		| { success: true; action: string }
+		| { action: string; errors: Record<string, string>; values?: Record<string, string> };
+
+	const result = $derived(form as FormResult | null | undefined);
+	const commentErrors = $derived(
+		result && 'errors' in result && result.action === 'comment' ? result.errors : {}
+	);
+	const updateError = $derived(
+		result && 'errors' in result && result.action === 'update'
+			? (result.errors.form ?? result.errors.title ?? '')
+			: ''
+	);
 
 	const issue = $derived(data.issue);
 	const comments = $derived(issue.comments?.data ?? []);
@@ -85,13 +99,13 @@
 					<div class="mb-6 flex flex-col gap-4">
 						{#each comments as comment (comment.id)}
 							<div class="flex gap-3">
-								<Avatar name={comment.author ?? 'Unknown'} size="md" />
+								<Avatar name={comment.AUTHOR ?? 'Unknown'} size="md" />
 								<div class="flex-1 rounded-lg border border-mist bg-chalk px-4 py-3">
 									<div class="mb-1.5 flex items-center gap-2">
-										<span class="text-[0.85rem] font-semibold text-ink">{comment.author}</span>
+										<span class="text-[0.85rem] font-semibold text-ink">{comment.AUTHOR}</span>
 										<span class="text-xs text-muted">{formatDateTime(comment.created_at)}</span>
 									</div>
-									<p class="m-0 text-[0.9rem] leading-[1.5] text-ink">{comment.body}</p>
+									<p class="m-0 text-[0.9rem] leading-[1.5] text-ink">{comment.BODY}</p>
 								</div>
 							</div>
 						{/each}
@@ -104,12 +118,25 @@
 					class="rounded-lg border border-mist bg-chalk p-4"
 					use:enhance
 				>
-					<Field label="Your name" class="mb-3">
-						<input name="author" type="text" placeholder="Name" required class={inputClass} />
+					{#if commentErrors.form}
+						<p class="mt-0 mb-3 rounded-md bg-danger/10 px-3 py-2 text-[0.85rem] text-danger" role="alert">
+							{commentErrors.form}
+						</p>
+					{/if}
+					<Field label="Your name" class="mb-3" error={commentErrors.author ?? ''}>
+						<input
+							name="author"
+							type="text"
+							placeholder="Name"
+							required
+							value={result && 'values' in result ? (result.values?.author ?? '') : ''}
+							class={inputClass}
+						/>
 					</Field>
-					<Field label="Comment" class="mb-3">
+					<Field label="Comment" class="mb-3" error={commentErrors.body ?? ''}>
 						<textarea name="body" rows="3" placeholder="Add a comment..." required class={inputClass}
-						></textarea>
+							>{result && 'values' in result ? (result.values?.body ?? '') : ''}</textarea
+						>
 					</Field>
 					<Button type="submit" variant="primary">Add comment</Button>
 				</form>
@@ -119,6 +146,12 @@
 		<aside class="order-first rounded-[0.65rem] border border-mist bg-chalk p-5 md:order-none">
 			<h2 class="mt-0 mb-4 text-[0.85rem] font-bold tracking-[0.04em] text-muted uppercase">Details</h2>
 
+			{#if updateError}
+				<p class="mt-0 mb-3 rounded-md bg-danger/10 px-2.5 py-2 text-xs text-danger" role="alert">
+					{updateError}
+				</p>
+			{/if}
+
 			<form method="POST" action="?/update" use:enhance class="contents">
 				{#snippet statusValue()}
 					{#if editingField === 'status'}
@@ -126,8 +159,8 @@
 							name="status"
 							class={selectSmClass}
 							onchange={(e) => {
-								editingField = null;
 								e.currentTarget.form?.requestSubmit();
+								editingField = null;
 							}}
 						>
 							{#each statusOptions as s (s)}
@@ -154,8 +187,8 @@
 							name="priority"
 							class={selectSmClass}
 							onchange={(e) => {
-								editingField = null;
 								e.currentTarget.form?.requestSubmit();
+								editingField = null;
 							}}
 						>
 							{#each priorityOptions as p (p)}
@@ -179,8 +212,8 @@
 							name="type"
 							class={selectSmClass}
 							onchange={(e) => {
-								editingField = null;
 								e.currentTarget.form?.requestSubmit();
+								editingField = null;
 							}}
 						>
 							{#each typeOptions as t (t)}

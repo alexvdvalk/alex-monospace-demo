@@ -55,3 +55,16 @@ export function initials(name: string | null | undefined): string {
 		.map((part) => part[0]?.toUpperCase())
 		.join('');
 }
+
+/** Form posts are untrusted: only let known enum values reach the API. */
+export function isStatus(value: string): value is (typeof statusOptions)[number] {
+	return (statusOptions as readonly string[]).includes(value);
+}
+
+export function isPriority(value: string): value is (typeof priorityOptions)[number] {
+	return (priorityOptions as readonly string[]).includes(value);
+}
+
+export function isType(value: string): value is (typeof typeOptions)[number] {
+	return (typeOptions as readonly string[]).includes(value);
+}

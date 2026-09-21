@@ -6,6 +6,7 @@
 	import Field from '$lib/components/Field.svelte';
 	import { inputClass, selectClass } from '$lib/components/ui';
 	import { formatPrice, formatDateTime, formatRelativeDay, formatDuration } from '$lib/format';
+	import { callOutcomeLabels, callStatusLabels, callStatusOptions } from '$lib/sales';
 	import type { SalesCallFormField, SalesCallFormValues } from './+page.server';
 	import type { PageData } from './$types';
 
@@ -17,21 +18,6 @@
 
 	let showForm = $state(false);
 	let submitting = $state(false);
-
-	const statusLabels: Record<string, string> = {
-		scheduled: 'Scheduled',
-		completed: 'Completed',
-		no_show: 'No show',
-		cancelled: 'Cancelled'
-	};
-
-	const outcomeLabels: Record<string, string> = {
-		interested: 'Interested',
-		not_interested: 'Not interested',
-		follow_up: 'Follow up',
-		closed_won: 'Closed won',
-		closed_lost: 'Closed lost'
-	};
 
 	/** Pill colouring, keyed by call status. */
 	const statusPill: Record<string, string> = {
@@ -55,11 +41,8 @@
 
 	const filters = [
 		{ value: 'all', label: 'All' },
-		{ value: 'scheduled', label: 'Scheduled' },
-		{ value: 'completed', label: 'Completed' },
-		{ value: 'no_show', label: 'No show' },
-		{ value: 'cancelled', label: 'Cancelled' }
-	] as const;
+		...callStatusOptions.map((value) => ({ value, label: callStatusLabels[value] }))
+	];
 
 	let activeFilter = $state<string>('all');
 
@@ -79,7 +62,8 @@
 		const date = new Date();
 		date.setMinutes(date.getMinutes() + 60 - (date.getMinutes() % 15));
 		date.setSeconds(0, 0);
-		return date.toISOString().slice(0, 16);
+		const pad = (n: number) => String(n).padStart(2, '0');
+		return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 	}
 
 	const field = (name: SalesCallFormField) =>
@@ -172,12 +156,11 @@
 					/>
 				</Field>
 
-				<Field label="Status" tone="plain">
+				<Field label="Status" tone="plain" error={fieldError('status')}>
 					<select name="status" value={field('status') || 'scheduled'} class={selectClass}>
-						<option value="scheduled">Scheduled</option>
-						<option value="completed">Completed</option>
-						<option value="no_show">No show</option>
-						<option value="cancelled">Cancelled</option>
+						{#each callStatusOptions as status (status)}
+							<option value={status}>{callStatusLabels[status]}</option>
+						{/each}
 					</select>
 				</Field>
 
@@ -244,11 +227,10 @@
 		{/each}
 	</div>
 
-	<div class="mb-5 flex flex-wrap items-center gap-2" role="tablist" aria-label="Filter by status">
+	<div class="mb-5 flex flex-wrap items-center gap-2" role="group" aria-label="Filter by status">
 		{#each filters as filter (filter.value)}
 			<Chip
-				role="tab"
-				aria-selected={activeFilter === filter.value}
+				aria-pressed={activeFilter === filter.value}
 				active={activeFilter === filter.value}
 				onclick={() => (activeFilter = filter.value)}
 			>
@@ -276,7 +258,7 @@
 							<span class="text-[0.9rem]">{call.subject}</span>
 							{#if call.outcome}
 								<span class="{pillClass} {outcomePill[call.outcome] ?? ''}">
-									{outcomeLabels[call.outcome] ?? call.outcome}
+									{callOutcomeLabels[call.outcome] ?? call.outcome}
 								</span>
 							{/if}
 						</div>
@@ -296,7 +278,7 @@
 							class="col-start-2 {pillClass} {statusPill[call.status ?? ''] ??
 								''} wide:col-auto wide:min-w-24 wide:justify-center wide:justify-self-end"
 						>
-							{statusLabels[call.status ?? ''] ?? call.status}
+							{callStatusLabels[call.status ?? ''] ?? call.status}
 						</span>
 					</article>
 				</li>
