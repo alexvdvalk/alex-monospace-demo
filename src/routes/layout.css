@@ -1,27 +1,63 @@
 @import 'tailwindcss';
 
-:root {
-	--ink: #101814;
-	--paper: #eef2ef;
-	--mist: #d5ded8;
-	--pine: #1b5e45;
-	--pine-deep: #0f3d2d;
-	--signal: #0e7c7b;
-	--chalk: #f7faf8;
-	--muted: #5c6b63;
-	--danger: #a33b2b;
+@theme {
+	--color-ink: #101814;
+	--color-paper: #eef2ef;
+	--color-mist: #d5ded8;
+	--color-pine: #1b5e45;
+	--color-pine-deep: #0f3d2d;
+	--color-signal: #0e7c7b;
+	--color-chalk: #f7faf8;
+	--color-muted: #5c6b63;
+	--color-danger: #a33b2b;
+	--color-mist-pine: #a7beb3;
+	--color-flag-critical: #dc2626;
+	--color-flag-high: #ea580c;
+	--color-flag-medium: #ca8a04;
+	--color-flag-low: #6b7280;
+	--color-flag-epic: #9333ea;
+
+	--breakpoint-xs: 550px;
+	--breakpoint-wide: 900px;
 
 	--font-display: 'Syne', sans-serif;
 	--font-body: 'Figtree', sans-serif;
 	--font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
+	--animate-rise: rise 0.5s ease-out both;
+	--animate-row-in: row-in 0.4s ease-out both;
+
+	@keyframes rise {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes row-in {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+}
+
+:root {
 	color-scheme: light;
 }
 
 @layer base {
 	html {
-		background: var(--paper);
-		color: var(--ink);
+		background: var(--color-paper);
+		color: var(--color-ink);
 		font-family: var(--font-body);
 		-webkit-font-smoothing: antialiased;
 	}
@@ -31,7 +67,7 @@
 		background:
 			radial-gradient(ellipse 80% 50% at 100% -10%, rgb(14 124 123 / 0.12), transparent 55%),
 			radial-gradient(ellipse 60% 40% at -10% 30%, rgb(27 94 69 / 0.1), transparent 50%),
-			linear-gradient(180deg, #e8eee9 0%, var(--paper) 40%, #e6ebe7 100%);
+			linear-gradient(180deg, #e8eee9 0%, var(--color-paper) 40%, #e6ebe7 100%);
 	}
 
 	a {
@@ -40,7 +76,7 @@
 	}
 
 	:focus-visible {
-		outline: 2px solid var(--signal);
+		outline: 2px solid var(--color-signal);
 		outline-offset: 3px;
 	}
 }
