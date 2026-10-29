@@ -36,7 +36,7 @@
 	);
 
 	const issue = $derived(data.issue);
-	const comments = $derived(issue.comments?.data ?? []);
+	const comments = $derived(issue.jira_comments?.data ?? []);
 	const labels = $derived(
 		issue.labels ? issue.labels.split(',').map((l: string) => l.trim()).filter(Boolean) : []
 	);
@@ -48,7 +48,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.project.key}-{issue.issue_number} {issue.title} &mdash; Atlas Tracker</title>
+	<title>{data.project.key}-{issue.issueNumber} {issue.title} &mdash; Atlas Tracker</title>
 </svelte:head>
 
 {#snippet detailRow(label: string, value: Snippet)}
@@ -64,7 +64,7 @@
 		items={[
 			{ label: 'Tracker', href: '/tracker' },
 			{ label: data.project.key, href: `/tracker/${data.project.key}` },
-			{ label: `${data.project.key}-${issue.issue_number}` }
+			{ label: `${data.project.key}-${issue.issueNumber}` }
 		]}
 	/>
 
@@ -99,13 +99,13 @@
 					<div class="mb-6 flex flex-col gap-4">
 						{#each comments as comment (comment.id)}
 							<div class="flex gap-3">
-								<Avatar name={comment.AUTHOR ?? 'Unknown'} size="md" />
+								<Avatar name={comment.author ?? 'Unknown'} size="md" />
 								<div class="flex-1 rounded-lg border border-mist bg-chalk px-4 py-3">
 									<div class="mb-1.5 flex items-center gap-2">
-										<span class="text-[0.85rem] font-semibold text-ink">{comment.AUTHOR}</span>
-										<span class="text-xs text-muted">{formatDateTime(comment.created_at)}</span>
+										<span class="text-[0.85rem] font-semibold text-ink">{comment.author}</span>
+										<span class="text-xs text-muted">{formatDateTime(comment.createdAt)}</span>
 									</div>
-									<p class="m-0 text-[0.9rem] leading-[1.5] text-ink">{comment.BODY}</p>
+									<p class="m-0 text-[0.9rem] leading-[1.5] text-ink">{comment.body}</p>
 								</div>
 							</div>
 						{/each}
@@ -273,18 +273,18 @@
 				{@render detailRow('Labels', labelsValue)}
 			{/if}
 
-			{#if issue.due_date}
+			{#if issue.dueDate}
 				{#snippet dueValue()}
-					{issue.due_date}
-					<span class="text-[0.8rem] text-muted">({formatRelativeDay(issue.due_date)})</span>
+					{issue.dueDate}
+					<span class="text-[0.8rem] text-muted">({formatRelativeDay(issue.dueDate)})</span>
 				{/snippet}
 				{@render detailRow('Due date', dueValue)}
 			{/if}
 
-			{#snippet createdValue()}{formatDateTime(issue.created_at)}{/snippet}
+			{#snippet createdValue()}{formatDateTime(issue.createdAt)}{/snippet}
 			{@render detailRow('Created', createdValue)}
 
-			{#snippet updatedValue()}{formatDateTime(issue.updated_at)}{/snippet}
+			{#snippet updatedValue()}{formatDateTime(issue.updatedAt)}{/snippet}
 			{@render detailRow('Updated', updatedValue)}
 		</aside>
 	</div>

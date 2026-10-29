@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { formatOwner, formatPrice, formatWeight, stockTotal } from '$lib/format';
+	import { formatPrice, formatWeight, stockTotal } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	const product = $derived(data.product);
-	const stock = $derived(stockTotal(product.inventory));
-	const inventoryRows = $derived(product.inventory?.data ?? []);
-	const owner = $derived(formatOwner(product.EMPLOYEE));
+	const inventoryRows = $derived(data.inventory);
+	const stock = $derived(stockTotal(inventoryRows));
 
 	const headingClass =
 		'mt-0 mb-3.5 font-display text-[0.95rem] font-bold tracking-[0.08em] text-pine uppercase';
@@ -52,7 +51,7 @@
 		<dl class="m-0 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-mist py-[1.15rem]">
 			<div>
 				<dt class={termClass}>Weight</dt>
-				<dd class={detailClass}>{formatWeight(product.weight_kg)}</dd>
+				<dd class={detailClass}>{formatWeight(product.weightKg)}</dd>
 			</div>
 			<div>
 				<dt class={termClass}>SKU</dt>
@@ -62,24 +61,11 @@
 				<dt class={termClass}>In stock</dt>
 				<dd class="{detailClass} {stock > 0 && stock <= 30 ? 'text-danger' : ''}">{stock} units</dd>
 			</div>
-			<div>
-				<dt class={termClass}>Owner</dt>
-				<dd class={detailClass}>
-					{#if owner && product.EMPLOYEE}
-						{owner}
-						<span class="ml-1.5 font-mono text-[0.8rem] font-medium text-muted">
-							#{product.EMPLOYEE.emp_no}
-						</span>
-					{:else}
-						Unassigned
-					{/if}
-				</dd>
-			</div>
-			{#if product.created_at}
+			{#if product.createdAt}
 				<div>
 					<dt class={termClass}>Listed</dt>
 					<dd class={detailClass}>
-						{new Date(product.created_at).toLocaleDateString('en-US', {
+						{new Date(product.createdAt).toLocaleDateString('en-US', {
 							year: 'numeric',
 							month: 'short',
 							day: 'numeric'
@@ -105,8 +91,8 @@
 								.join(', ')}
 						</div>
 						<div class="mt-1 flex items-baseline gap-3">
-							<span class="text-xl font-bold tabular-nums">{row.quantity_on_hand ?? 0}</span>
-							<span class="text-[0.8rem] text-muted">reorder at {row.reorder_threshold ?? 0}</span>
+							<span class="text-xl font-bold tabular-nums">{row.quantityOnHand ?? 0}</span>
+							<span class="text-[0.8rem] text-muted">reorder at {row.reorderThreshold ?? 0}</span>
 						</div>
 					</li>
 				{/each}

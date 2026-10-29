@@ -17,32 +17,24 @@ export const load: PageServerLoad = async ({ params }) => {
 	const key = asUuid(params.id);
 
 	try {
-		const product = await monospace.products.readOne({
-			key,
-			fields: [
-				'id',
-				'name',
-				'sku',
-				'price',
-				'description',
-				'weight_kg',
-				'created_at',
-				{ categories: ['id', 'name', 'slug'] },
-				{ EMPLOYEE: ['emp_no', 'FIRST_NAME', 'last_name', 'hire_date'] },
-				{
-					inventory: [
-						'id',
-						'quantity_on_hand',
-						'reorder_threshold',
-						{
-							warehouse_locations: ['id', 'name', 'region', 'country', 'capacity']
-						}
-					]
-				}
-			] as const
-		});
+		// Products no longer expose an inventory relation, so stock is read by productId.
+		const [product, inventory] = await Promise.all([
+			monospace.products.readOne({
+				key,
+				fields: ['id', 'name', 'sku', 'price', 'description', 'weightKg', 'createdAt'],
+				include: { categories: { fields: ['id', 'name', 'slug'] } }
+			}),
+			monospace.inventory.readMany({
+				fields: ['id', 'quantityOnHand', 'reorderThreshold'],
+				include: {
+					warehouse_locations: { fields: ['id', 'name', 'region', 'country', 'capacity'] }
+				},
+				filter: { productId: { _eq: key } },
+				sort: [{ id: { direction: 'asc' } }]
+			})
+		]);
 
-		return { product };
+		return { product, inventory };
 	} catch (e) {
 		const status = e && typeof e === 'object' && 'status' in e ? Number(e.status) : 0;
 		if (status === 404) {

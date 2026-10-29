@@ -8,18 +8,16 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!/^\d+$/.test(params.number)) error(400, 'Invalid issue number');
 	const issueNumber = Number(params.number);
 
-	const projects = await monospace.jira_projects.readMany({
-		fields: ['id', 'name', 'key'] as const,
-		filter: { key: { _eq: projectKey } },
-		limit: 1
+	const project = await monospace.jiraProjects.readFirst({
+		fields: ['id', 'name', 'key'],
+		filter: { key: { _eq: projectKey } }
 	});
-	const project = projects[0];
 	if (!project) throw error(404, `Project "${projectKey}" not found`);
 
-	const issues = await monospace.jira_issues.readMany({
+	const issue = await monospace.jiraIssues.readFirst({
 		fields: [
 			'id',
-			'issue_number',
+			'issueNumber',
 			'title',
 			'description',
 			'type',
@@ -28,21 +26,20 @@ export const load: PageServerLoad = async ({ params }) => {
 			'assignee',
 			'reporter',
 			'labels',
-			'due_date',
-			'created_at',
-			'updated_at',
-			{ comments: ['id', 'AUTHOR', 'BODY', 'created_at'] }
-		] as const,
-		filter: {
-			_and: [
-				{ project: { key: { _eq: projectKey } } },
-				{ issue_number: { _eq: issueNumber } }
-			]
+			'dueDate',
+			'createdAt',
+			'updatedAt'
+		],
+		include: {
+			jira_comments: {
+				fields: ['id', 'author', 'body', 'createdAt'],
+				sort: [{ createdAt: { direction: 'asc' } }]
+			}
 		},
-		limit: 1
+		filter: {
+			_and: [{ projectId: { _eq: project.id! } }, { issueNumber: { _eq: issueNumber } }]
+		}
 	});
-
-	const issue = issues[0];
 	if (!issue) throw error(404, `Issue ${projectKey}-${issueNumber} not found`);
 
 	return { project, issue };
@@ -54,22 +51,26 @@ export const actions: Actions = {
 		const projectKey = params.key.toUpperCase();
 		const issueNumber = Number(params.number);
 
-		const issues = await monospace.jira_issues.readMany({
-			fields: ['id'] as const,
+		const issue = await monospace.jiraIssues.readFirst({
+			fields: ['id'],
 			filter: {
 				_and: [
-					{ project: { key: { _eq: projectKey } } },
-					{ issue_number: { _eq: issueNumber } }
+					{ jira_projects: { key: { _eq: projectKey } } },
+					{ issueNumber: { _eq: issueNumber } }
 				]
-			},
-			limit: 1
+			}
 		});
-		const issue = issues[0];
 		if (!issue) throw error(404, 'Issue not found');
 
 		const data: Record<string, string | null> = {};
-		for (const field of ['assignee', 'labels', 'due_date']) {
-			const val = formData.get(field);
+		// Form inputs keep their snake_case names; the API uses camelCase.
+		const nullable = [
+			['assignee', 'assignee'],
+			['labels', 'labels'],
+			['due_date', 'dueDate']
+		] as const;
+		for (const [input, field] of nullable) {
+			const val = formData.get(input);
 			if (val !== null) {
 				data[field] = val.toString().trim() || null;
 			}
@@ -107,10 +108,10 @@ export const actions: Actions = {
 		}
 
 		try {
-			await monospace.jira_issues.updateOne({
+			await monospace.jiraIssues.updateOne({
 				key: issue.id!,
 				data,
-				fields: ['id'] as const
+				fields: ['id']
 			});
 		} catch (err) {
 			console.error('Failed to update issue:', err);
@@ -130,28 +131,27 @@ export const actions: Actions = {
 		if (!author) return fail(400, { action: 'comment', errors: { author: 'Name is required' }, values: { author, body } });
 		if (!body) return fail(400, { action: 'comment', errors: { body: 'Comment cannot be empty' }, values: { author, body } });
 
-		const issues = await monospace.jira_issues.readMany({
-			fields: ['id'] as const,
+		const issue = await monospace.jiraIssues.readFirst({
+			fields: ['id'],
 			filter: {
 				_and: [
-					{ project: { key: { _eq: projectKey } } },
-					{ issue_number: { _eq: issueNumber } }
+					{ jira_projects: { key: { _eq: projectKey } } },
+					{ issueNumber: { _eq: issueNumber } }
 				]
-			},
-			limit: 1
+			}
 		});
-		const issue = issues[0];
 		if (!issue) throw error(404, 'Issue not found');
 
 		try {
-			await monospace.jira_comments.createOne({
+			await monospace.jiraComments.createOne({
 				data: {
-					id: crypto.randomUUID() as `${string}-${string}-${string}-${string}-${string}`,
-					issue: { _connect: { key: { id: issue.id! } } },
-					AUTHOR: author,
-					BODY: body
+					id: crypto.randomUUID(),
+					jira_issues: { _connect: { key: { id: issue.id! } } },
+					author,
+					body,
+					createdAt: new Date().toISOString()
 				},
-				fields: ['id'] as const
+				fields: ['id']
 			});
 		} catch (err) {
 			console.error('Failed to add comment:', err);

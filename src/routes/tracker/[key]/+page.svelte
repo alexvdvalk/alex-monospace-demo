@@ -194,22 +194,22 @@
 				<div class="flex flex-col gap-2">
 					{#each issues as issue (issue.id)}
 						<a
-							href="/tracker/{data.project.key}/issues/{issue.issue_number}"
+							href="/tracker/{data.project.key}/issues/{issue.issueNumber}"
 							data-sveltekit-preload-data="hover"
 							class="flex cursor-pointer flex-col gap-1.5 rounded-lg border border-mist bg-chalk px-3.5 py-3 transition-all duration-150 hover:-translate-y-px hover:border-pine hover:shadow-[0_2px_8px_rgb(0_0_0/0.06)]"
 						>
 							<div class="flex items-center justify-between">
 								<span class="font-mono text-[0.72rem] font-medium text-muted">
-									{data.project.key}-{issue.issue_number}
+									{data.project.key}-{issue.issueNumber}
 								</span>
 								<TypeBadge type={issue.type} />
 							</div>
 							<p class="m-0 text-[0.85rem] leading-[1.35] font-medium text-ink">{issue.title}</p>
 							<div class="mt-0.5 flex items-center gap-2">
 								<PriorityDot priority={issue.priority} />
-								{#if issue.due_date}
-									<span class="text-[0.72rem] text-muted" title="Due {issue.due_date}">
-										{formatRelativeDay(issue.due_date)}
+								{#if issue.dueDate}
+									<span class="text-[0.72rem] text-muted" title="Due {issue.dueDate}">
+										{formatRelativeDay(issue.dueDate)}
 									</span>
 								{/if}
 								<span class="flex-1"></span>

@@ -31,22 +31,22 @@ const toNumber = (value: string | null | undefined): number => {
 };
 
 export const load: PageServerLoad = async () => {
-	const calls = await monospace.sales_calls.readMany({
+	const calls = await monospace.salesCalls.readMany({
 		fields: [
 			'id',
-			'contact_name',
+			'contactName',
 			'company',
 			'phone',
 			'email',
 			'subject',
-			'scheduled_at',
-			'duration_minutes',
+			'scheduledAt',
+			'durationMinutes',
 			'status',
 			'outcome',
-			'deal_value',
+			'dealValue',
 			'notes'
 		] as const,
-		sort: [{ scheduled_at: { direction: 'desc' } }],
+		sort: [{ scheduledAt: { direction: 'desc' } }],
 		limit: 200
 	});
 
@@ -62,14 +62,14 @@ export const load: PageServerLoad = async () => {
 	};
 
 	for (const call of calls) {
-		const isFuture = call.scheduled_at ? new Date(call.scheduled_at).getTime() >= now : false;
+		const isFuture = call.scheduledAt ? new Date(call.scheduledAt).getTime() >= now : false;
 		if (call.status === 'scheduled') {
-			stats.pipelineValue += toNumber(call.deal_value);
+			stats.pipelineValue += toNumber(call.dealValue);
 			if (isFuture) stats.upcoming += 1;
 		}
 		if (call.status === 'completed') stats.completed += 1;
 		if (call.status === 'no_show' || call.status === 'cancelled') stats.unresolved += 1;
-		if (call.outcome === 'closed_won') stats.wonValue += toNumber(call.deal_value);
+		if (call.outcome === 'closed_won') stats.wonValue += toNumber(call.dealValue);
 	}
 
 	return { calls, stats };
@@ -132,21 +132,24 @@ export const actions: Actions = {
 		}
 
 		try {
-			await monospace.sales_calls.createOne({
+			const now = new Date().toISOString();
+			await monospace.salesCalls.createOne({
 				data: {
 					id: crypto.randomUUID(),
-					contact_name: values.contact_name,
+					contactName: values.contact_name,
 					subject: values.subject,
-					scheduled_at: new Date(values.scheduled_at).toISOString(),
+					scheduledAt: new Date(values.scheduled_at).toISOString(),
 					company: emptyToNull(values.company),
 					phone: emptyToNull(values.phone),
 					email: emptyToNull(values.email),
-					duration_minutes,
+					durationMinutes: duration_minutes,
 					status: values.status,
-					deal_value: emptyToNull(values.deal_value),
-					notes: emptyToNull(values.notes)
+					dealValue: emptyToNull(values.deal_value),
+					notes: emptyToNull(values.notes),
+					createdAt: now,
+					updatedAt: now
 				},
-				fields: ['id'] as const
+				fields: ['id']
 			});
 		} catch (error) {
 			console.error('Failed to create sales call:', error);

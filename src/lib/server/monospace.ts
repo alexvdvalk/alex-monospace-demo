@@ -6,7 +6,7 @@ if (!MONOSPACE_API_KEY) {
 }
 
 export const monospace = createClient({
-	url: 'https://demo.monospace.io',
-	project: 'atlas-innovations',
+	url: 'https://demo.cloud.monospace.io',
+	workspace: 'atlas-innovations',
 	apiKey: MONOSPACE_API_KEY
 });

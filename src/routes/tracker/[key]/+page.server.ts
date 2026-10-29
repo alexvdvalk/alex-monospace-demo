@@ -1,22 +1,20 @@
 import { error, fail } from '@sveltejs/kit';
 import { monospace } from '$lib/server/monospace';
 import { isPriority, isType } from '$lib/tracker';
+import type { Uuid } from '../../../generated/monospace';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const projects = await monospace.jira_projects.readMany({
-		fields: ['id', 'name', 'key', 'description'] as const,
-		filter: { key: { _eq: params.key.toUpperCase() } },
-		limit: 1
+	const project = await monospace.jiraProjects.readFirst({
+		fields: ['id', 'name', 'key', 'description'],
+		filter: { key: { _eq: params.key.toUpperCase() } }
 	});
-
-	const project = projects[0];
 	if (!project) throw error(404, `Project "${params.key}" not found`);
 
-	const issues = await monospace.jira_issues.readMany({
+	const issues = await monospace.jiraIssues.readMany({
 		fields: [
 			'id',
-			'issue_number',
+			'issueNumber',
 			'title',
 			'description',
 			'type',
@@ -25,12 +23,12 @@ export const load: PageServerLoad = async ({ params }) => {
 			'assignee',
 			'reporter',
 			'labels',
-			'due_date',
-			'created_at',
-			'updated_at'
-		] as const,
-		filter: { project: { key: { _eq: params.key.toUpperCase() } } },
-		sort: [{ issue_number: { direction: 'asc' } }],
+			'dueDate',
+			'createdAt',
+			'updatedAt'
+		],
+		filter: { projectId: { _eq: project.id! } },
+		sort: [{ issueNumber: { direction: 'asc' } }],
 		limit: 500
 	});
 
@@ -60,28 +58,26 @@ export const actions: Actions = {
 			return fail(400, { action: 'create', errors, values });
 		}
 
-		const projects = await monospace.jira_projects.readMany({
-			fields: ['id', 'key'] as const,
-			filter: { key: { _eq: params.key.toUpperCase() } },
-			limit: 1
+		const project = await monospace.jiraProjects.readFirst({
+			fields: ['id', 'key'],
+			filter: { key: { _eq: params.key.toUpperCase() } }
 		});
-		const project = projects[0];
 		if (!project) throw error(404, 'Project not found');
 
-		const existing = await monospace.jira_issues.readMany({
-			fields: ['issue_number'] as const,
-			filter: { project: { key: { _eq: params.key.toUpperCase() } } },
-			sort: [{ issue_number: { direction: 'desc' } }],
-			limit: 1
+		const latest = await monospace.jiraIssues.readFirst({
+			fields: ['issueNumber'],
+			filter: { projectId: { _eq: project.id! } },
+			sort: [{ issueNumber: { direction: 'desc' } }]
 		});
-		const nextNumber = (existing[0]?.issue_number ?? 0) + 1;
+		const nextNumber = (latest?.issueNumber ?? 0) + 1;
 
 		try {
-			await monospace.jira_issues.createOne({
+			const now = new Date().toISOString();
+			await monospace.jiraIssues.createOne({
 				data: {
-					id: crypto.randomUUID() as `${string}-${string}-${string}-${string}-${string}`,
-					project: { _connect: { key: { id: project.id! } } },
-					issue_number: nextNumber,
+					id: crypto.randomUUID(),
+					jira_projects: { _connect: { key: { id: project.id! } } },
+					issueNumber: nextNumber,
 					title,
 					description,
 					type,
@@ -89,9 +85,12 @@ export const actions: Actions = {
 					assignee,
 					reporter,
 					labels,
-					due_date
+					dueDate: due_date,
+					status: 'todo',
+					createdAt: now,
+					updatedAt: now
 				},
-				fields: ['id'] as const
+				fields: ['id']
 			});
 		} catch (err) {
 			console.error('Failed to create issue:', err);
@@ -109,10 +108,10 @@ export const actions: Actions = {
 		if (!issueId || !status) return fail(400, { action: 'updateStatus', errors: { form: 'Missing issue or status' } });
 
 		try {
-			await monospace.jira_issues.updateOne({
-				key: issueId as `${string}-${string}-${string}-${string}-${string}`,
+			await monospace.jiraIssues.updateOne({
+				key: issueId as Uuid,
 				data: { status },
-				fields: ['id'] as const
+				fields: ['id']
 			});
 		} catch (err) {
 			console.error('Failed to update status:', err);

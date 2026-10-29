@@ -3,27 +3,21 @@ import { monospace } from '$lib/server/monospace';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const projects = await monospace.jira_projects.readMany({
-		fields: [
-			'id',
-			'name',
-			'key',
-			'description',
-			'created_at',
-			{ issues: ['id', 'status'] }
-		] as const,
-		sort: [{ created_at: { direction: 'desc' } }]
+	const projects = await monospace.jiraProjects.readMany({
+		fields: ['id', 'name', 'key', 'description', 'createdAt'],
+		include: { jira_issues: { fields: ['id', 'status'] } },
+		sort: [{ createdAt: { direction: 'desc' } }]
 	});
 
 	return {
 		projects: projects.map((p) => {
-			const issues = p.issues?.data ?? [];
+			const issues = p.jira_issues?.data ?? [];
 			return {
 				id: p.id,
 				name: p.name,
 				key: p.key,
 				description: p.description,
-				created_at: p.created_at,
+				created_at: p.createdAt,
 				counts: {
 					total: issues.length,
 					todo: issues.filter((i) => i.status === 'todo').length,
@@ -54,8 +48,9 @@ export const actions: Actions = {
 		}
 
 		try {
-			await monospace.jira_projects.createOne({
-				data: { id: crypto.randomUUID() as `${string}-${string}-${string}-${string}-${string}`, name, key, description },
+			const now = new Date().toISOString();
+			await monospace.jiraProjects.createOne({
+				data: { id: crypto.randomUUID(), name, key, description, createdAt: now },
 				fields: ['id'] as const
 			});
 		} catch (error) {

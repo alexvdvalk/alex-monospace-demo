@@ -249,9 +249,9 @@
 					<article
 						class="grid grid-cols-[auto_1fr] items-center gap-x-3.5 gap-y-2.5 rounded-[0.4rem] border border-transparent bg-chalk/55 px-4 py-3.5 transition-all duration-200 hover:translate-x-[3px] hover:border-mist-pine hover:bg-chalk wide:grid-cols-[auto_minmax(0,1.1fr)_minmax(0,1.4fr)_auto_auto_auto_auto] wide:gap-5"
 					>
-						<Avatar name={call.contact_name} size="lg" gradient />
+						<Avatar name={call.contactName} size="lg" gradient />
 						<div class="flex min-w-0 flex-col">
-							<span class="font-semibold tracking-[-0.01em]">{call.contact_name}</span>
+							<span class="font-semibold tracking-[-0.01em]">{call.contactName}</span>
 							<span class="text-[0.85rem] text-muted">{call.company ?? 'Independent'}</span>
 						</div>
 						<div class="col-start-2 flex flex-wrap items-center gap-2 wide:col-auto">
@@ -265,14 +265,14 @@
 						<div
 							class="col-start-2 flex flex-wrap items-baseline gap-2 wide:col-auto wide:flex-col wide:items-start wide:gap-0.5"
 						>
-							<span class="text-[0.85rem] text-muted">{formatDateTime(call.scheduled_at)}</span>
-							<span class="text-xs font-semibold text-pine">{formatRelativeDay(call.scheduled_at)}</span>
+							<span class="text-[0.85rem] text-muted">{formatDateTime(call.scheduledAt)}</span>
+							<span class="text-xs font-semibold text-pine">{formatRelativeDay(call.scheduledAt)}</span>
 						</div>
 						<span class="col-start-2 font-mono text-[0.85rem] text-muted wide:col-auto">
-							{formatDuration(call.duration_minutes)}
+							{formatDuration(call.durationMinutes)}
 						</span>
 						<span class="col-start-2 font-bold tabular-nums wide:col-auto wide:min-w-20 wide:text-right">
-							{call.deal_value ? formatPrice(call.deal_value) : '—'}
+							{call.dealValue ? formatPrice(call.dealValue) : '—'}
 						</span>
 						<span
 							class="col-start-2 {pillClass} {statusPill[call.status ?? ''] ??

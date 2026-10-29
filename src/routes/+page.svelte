@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatOwner, formatPrice, formatWeight, stockTotal } from '$lib/format';
+	import { formatPrice, formatWeight } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -30,8 +30,6 @@
 	{:else}
 		<ul class="m-0 flex list-none flex-col gap-2 p-0">
 			{#each data.products as product, i (product.id)}
-				{@const stock = stockTotal(product.inventory)}
-				{@const owner = formatOwner(product.EMPLOYEE)}
 				<li
 					class="animate-row-in [animation-delay:calc(var(--i)*28ms)]"
 					style="--i: {i}"
@@ -55,13 +53,12 @@
 						>
 							<span class="font-mono text-xs">{product.sku}</span>
 							<span>{product.categories?.name ?? 'Uncategorized'}</span>
-							<span>{owner ?? 'No owner'}</span>
 						</span>
 						<span
 							class="flex flex-wrap gap-x-4 gap-y-2 text-[0.8rem] text-muted wide:min-w-64 wide:items-baseline wide:justify-end wide:gap-5"
 						>
-							<span>{formatWeight(product.weight_kg)}</span>
-							<span class={stock > 0 && stock <= 30 ? 'text-danger' : ''}>{stock} in stock</span>
+							<span>{formatWeight(product.weightKg)}</span>
+							<span class={product.stock > 0 && product.stock <= 30 ? 'text-danger' : ''}>{product.stock} in stock</span>
 							<span class="text-base font-bold tabular-nums text-ink">{formatPrice(product.price)}</span>
 						</span>
 						<span class="hidden self-center text-[1.1rem] text-pine wide:block" aria-hidden="true">→</span>

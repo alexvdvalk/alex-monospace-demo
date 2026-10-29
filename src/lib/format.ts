@@ -17,10 +17,10 @@ export function formatWeight(value: string | number | null | undefined): string 
 }
 
 export function stockTotal(
-	inventory: { data: { quantity_on_hand: number | null }[] } | null | undefined
+	inventory: readonly { quantityOnHand?: number | null }[] | null | undefined
 ): number {
-	if (!inventory?.data?.length) return 0;
-	return inventory.data.reduce((sum, row) => sum + (row.quantity_on_hand ?? 0), 0);
+	if (!inventory?.length) return 0;
+	return inventory.reduce((sum, row) => sum + (row.quantityOnHand ?? 0), 0);
 }
 
 export function formatDateTime(value: string | null | undefined): string {
@@ -53,21 +53,4 @@ export function formatDuration(minutes: number | null | undefined): string {
 	const h = Math.floor(minutes / 60);
 	const m = minutes % 60;
 	return m ? `${h}h ${m}m` : `${h}h`;
-}
-
-export function formatOwner(
-	owner:
-		| {
-				FIRST_NAME?: string | null;
-				last_name?: string | null;
-				emp_no?: number | null;
-		  }
-		| null
-		| undefined
-): string | null {
-	if (!owner) return null;
-	const name = [owner.FIRST_NAME, owner.last_name].filter(Boolean).join(' ').trim();
-	if (name) return name;
-	if (owner.emp_no != null) return `#${owner.emp_no}`;
-	return null;
 }

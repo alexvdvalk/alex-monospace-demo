@@ -2,6 +2,6 @@ import { defineConfig } from '@monospace/sdk/config';
 
 export default defineConfig({
     url: 'https://demo.cloud.monospace.io',
-    project: 'atlas-innovations',
+    workspace: 'atlas-innovations',
     output: './src/generated/monospace',
 });

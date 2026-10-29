@@ -10,5 +10,8 @@
   },
   "enabledMcpjsonServers": [
     "monospace"
-  ]
+  ],
+  "skillOverrides": {
+    "anthropic-skills:docs": "name-only"
+  }
 }
